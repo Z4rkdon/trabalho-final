@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="style.css" rel="stylesheet">
     <title>LOGIN</title>
     <style>
         body {
@@ -71,10 +72,9 @@
     </header>
 
     <main class="d-flex flex-column justify-content-center align-items-center">
+        <form id="form_cadastro" style="width: 100%; max-width: 500px; padding: 20px; background: white; border-radius: 8px;">
         <div class="container mt-4">
-            <h1>Login de Clientes</h1>
-            
-            <form id="form_login" >
+            <h1>Cadastro de Clientes</h1>
 
                 <label for="e-mail">E-mail:</label>
                 <input type="email" id="e-mail" required class="form-control input_texto">
@@ -84,70 +84,52 @@
 
                 <p class="text-center mt-3">Já possui cadastro? Faça login <a href="cadastro.html">aqui</a></p>
 
-                <input type="submit" value="Logar" id="btn_enviar" class="btn btn-primary w-100 mt-2 btn_enviar">
+                <input type="submit" value="Cadastrar" id="btn_enviar" class="btn btn-primary w-100 mt-2 btn_enviar">
             </form>
-        </form>
-
-        <div class="position-fixed" style="top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1050;">
-            <div id="liveToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
-                <div class="d-flex">
-                    <div class="toast-body" id="toast-message">
-                        Mensagem
-                    </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fechar"></button>
-            </div>
         </div>
-    </div>
     </main>
-    <footer> </footer>
+
+    <footer></footer>
 
     <script>
-        function pegar_dados() {
+
+        function pegar_dados(){
             const dados = {
                 email: document.getElementById("e-mail").value,
                 senha: document.getElementById("senha").value
             }
-            return dados
+            return JSON.stringify(dados)
         }
-        const form = document.getElementById("form_login")
-        const btn_enviar = document.getElementById("btn_enviar")
-        form.addEventListener("submit", async (event) => {
-            event.preventDefault()
-            btn_enviar.disabled = true
-            btn_enviar.value = "Entrando..."
-            const dados = pegar_dados()
+
+        async function enviar_cadastro(){
+            const btn_enviar = document.getElementById("btn_enviar");
+            btn_enviar.disabled = true;
+            btn_enviar.value = "Cadastrando...";
+            
+            const dados = pegar_dados();
             try {
-                const resposta = await fetch(
-                    "http://localhost:3000/login", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(dados)
-                    }
-                )
-                const json_resposta = await resposta.json()
-                if (!resposta.ok) {
-                    if (resposta.status == 401) {
-                        throw new Error(json_resposta.msg)
-                    } else {
-                        throw new Error("Erro inesperado na API")
-                    }
+                const resposta = await fetch("http://10.216.243.227:3001/clientes", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: dados
+                });
+                
+                if (!resposta.ok) { 
+                    throw new Error("Erro no servidor ao realizar cadastro.");
                 }
-                localStorage.setItem("nome_cliente", json_resposta.nome)
-                localStorage.setItem("token", json_resposta.token)
-                window.location.href = "produtos.html"
-            } catch (error) {
-                mostrarToast("❌ Falha ao enviar. " + error, "bg-danger");
-
+                
+                alert("Cliente cadastrado com sucesso!!!");
+                window.location.href = "login.html";
+            } catch(error) { 
+                alert("Erro em cadastrar! " + error.message);
             } finally {
-                btn_enviar.disabled = false
-                btn_enviar.value = "Entrar"
+                btn_enviar.disabled = false;
+                btn_enviar.value = "Cadastrar";
             }
-        })
+        }
     </script>
-
+    
     <script src="./pages.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-
 </body>
 </html>
