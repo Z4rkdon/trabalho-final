@@ -145,89 +145,36 @@ app.delete("/cliente/:id", async (req, res) => {
 
 app.get("/produto", async (req, res) => {
     try {
-        const [produtos] = await db.pool.query("SELECT id, nome, descricao, preco, estoque FROM produto")
-        res.status(200).json(produtos)
+        let sql = "SELECT * FROM produto WHERE 1=1"
+        const params = []
+        const { busca, ordenacao } = req.query
+        let resultado
+        if (busca) {
+            sql += " AND nome LIKE ?"
+            params.push(`%${busca}%`)
+        } 
+        if (ordenacao) {
+            if (ordenacao == "maior preco") {
+                sql += " ORDER BY preco DESC"
+            } else {
+                sql += " ORDER BY preco ASC"
+            }
+        }
+        resultado = await db.pool.query(sql, params)
+        res.status(200).json(resultado[0])
     } catch (error) {
-        res.status(500).json({ erro: error.message })
+        res.status(500).json({erro: error.message})
     }
 })
 
 app.get("/produto/:id", async (req, res) => {
     try {
-        const { id } = req.params
-        const [resultado] = await db.pool.query("SELECT id, nome, descricao, preco, estoque FROM produto WHERE id = ?", [id])
-        
-        if (resultado.length === 0) {
-            return res.status(404).json({ mensagem: "Produto não encontrado." })
-        }
-        
-        res.status(200).json(resultado[0])
+        const id = req.params.id
+        const resultado = await db.pool.query("SELECT * FROM produto WHERE id = ?", [id])
+        const produto = resultado[0][0]
+        res.status(200).json(produto)
     } catch (error) {
-        res.status(500).json({ erro: error.message })
-    }
-})
-
-app.post("/compra", autenticar, async (req, res) => {
-    try {
-        const { produto_id, quantidade, valor_total } = req.body
-        const cliente_id = req.usuario.id 
-
-        if (!produto_id || !quantidade || !valor_total) {
-            return res.status(400).json({ mensagem: "Os campos produto_id, quantidade e valor_total são obrigatórios." })
-        }
-
-        const [resultado] = await db.pool.query(
-            `INSERT INTO compra(cliente_id, produto_id, quantidade, valor_total, data_compra) VALUES (?, ?, ?, ?, NOW())`,
-            [cliente_id, produto_id, quantidade, valor_total]
-        )
-
-        res.status(201).json({
-            mensagem: "Compra realizada com sucesso!",
-            id: resultado.insertId
-        })
-    } catch (error) {
-        res.status(500).json({ erro: error.message })
-    }
-})
-
-app.get("/compra", autenticar, async (req, res) => {
-    try {
-        const cliente_id = req.usuario.id 
-
-        const [compras] = await db.pool.query(
-            `SELECT c.id, c.quantidade, c.valor_total, c.data_compra, p.nome AS produto_nome 
-             FROM compra c 
-             INNER JOIN produto p ON c.produto_id = p.id 
-             WHERE c.cliente_id = ?`, 
-            [cliente_id]
-        )
-        
-        res.status(200).json(compras)
-    } catch (error) {
-        res.status(500).json({ erro: error.message })
-    }
-})
-
-app.get("/compra/:id", autenticar, async (req, res) => {
-    try {
-        const { id } = req.params
-        const cliente_id = req.usuario.id
-
-        const [resultado] = await db.pool.query(
-            `SELECT c.id, c.quantidade, c.valor_total, c.data_compra, p.nome AS produto_nome, p.preco AS preco_unitario
-             FROM compra c 
-             INNER JOIN produto p ON c.produto_id = p.id 
-             WHERE c.id = ? AND c.cliente_id = ?`, 
-            [id, cliente_id]
-        )
-
-        if (resultado.length === 0) {
-            return res.status(404).json({ mensagem: "Compra não encontrada ou acesso não autorizado." })
-        }
-
-        res.status(200).json(resultado[0])
-    } catch (error) {
-        res.status(500).json({ erro: error.message })
+        res.status(500).json({erro: error.message})
     }
 })
 
