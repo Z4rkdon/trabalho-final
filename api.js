@@ -1,10 +1,17 @@
 let link_api = "http://localhost:3000"
 
-export async function buscar_produto(){
-     const resposta = await(fetch(link_api + "/produto"))
-     const resposta_json = await resposta.json()
+async function buscar_produto(queryParams){
+     let rota = "/produtos"
+     const queryString = queryParams.toString();
+     if (queryString){
+      rota+= "?" + queryString
+     }
+     const resposta = await fetch(link_api + rota);
+
      if(!resposta.ok){
         throw new Error("Erro em buscar produtos")
      }
+
+     const resposta_json = await resposta.json();
      return resposta_json
 }
